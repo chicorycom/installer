@@ -25,6 +25,7 @@ class Command extends symfonyCommand
             ->setName('new')
             ->setDescription('Create a new Chicorycom application')
             ->addArgument('name', InputArgument::REQUIRED)
+            ->addArgument('type', InputArgument::REQUIRED)
             ->addOption('dev', null, InputOption::VALUE_NONE, 'Installs the latest "development" release')
             ->addOption('git', null, InputOption::VALUE_NONE, 'Initialize a Git repository')
             ->addOption('branch', null, InputOption::VALUE_REQUIRED, 'The branch that should be created for a new repository', $this->defaultBranch())
@@ -91,9 +92,13 @@ class Command extends symfonyCommand
         }
 
         $composer = $this->findComposer();
+        $cmd = $composer." create-project chicorycom/framework \"$directory\" $version --remove-vcs --prefer-dist";
+
+        if($this->addArgument('type') == 'laravel')
+           $cmd = $composer." create-project laravel/laravel \"$directory\" $version --remove-vcs --prefer-dist";
 
         $commands = [
-            $composer." create-project chicorycom/framework \"$directory\" $version --remove-vcs --prefer-dist",
+            $cmd,
         ];
 
         if ($directory != '.' && $input->getOption('force')) {
