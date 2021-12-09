@@ -35,6 +35,7 @@ class Command extends symfonyCommand
             ->addOption('stack', null, InputOption::VALUE_OPTIONAL, 'The Jetstream stack that should be installed')
             ->addOption('teams', null, InputOption::VALUE_NONE, 'Indicates whether Jetstream should be scaffolded with team support')
             ->addOption('prompt-jetstream', null, InputOption::VALUE_NONE, 'Issues a prompt to determine if Jetstream should be installed')
+            ->addOption('auth', null, InputOption::VALUE_NONE, 'Laravel UI auth installed')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Forces install even if the directory already exists');
     }
 
@@ -79,6 +80,7 @@ class Command extends symfonyCommand
 
         $name = $input->getArgument('name');
 
+        $installAuth = $input->getOption('auth');
 
         $directory = $name !== '.' ? getcwd().'/'.$name : '.';
 
@@ -109,9 +111,15 @@ class Command extends symfonyCommand
                 array_unshift($commands, "rm -rf \"$directory\"");
             }
         }
-
-        if (PHP_OS_FAMILY != 'Windows') {
-            $commands[] = "chmod 755 \"$directory/console\"";
+        
+        if ($input->getOption('type') == 'laravel'){
+            if (PHP_OS_FAMILY != 'Windows') {
+                $commands[] = "chmod 755 \"$directory/artisan\"";
+            }
+        }else {
+            if (PHP_OS_FAMILY != 'Windows') {
+                $commands[] = "chmod 755 \"$directory/console\"";
+            }
         }
 
         if (($process = $this->runCommands($commands, $input, $output))->isSuccessful()) {
@@ -142,6 +150,11 @@ class Command extends symfonyCommand
             if ($installJetstream) {
                 $this->installJetstream($directory, $stack, $teams, $input, $output);
             }
+
+            if ($installAuth) {
+                $this->installAuth($directory, $input, $output);
+            }
+
 
             if ($input->getOption('github') !== false) {
                 $this->pushToGitHub($name, $directory, $input, $output);
@@ -187,12 +200,29 @@ class Command extends symfonyCommand
             $this->findComposer().' require laravel/jetstream',
             trim(sprintf(PHP_BINARY.' artisan jetstream:install %s %s', $stack, $teams ? '--teams' : '')),
             $stack === 'inertia' ? 'npm install && npm run dev' : null,
-            PHP_BINARY.' console storage:link',
+            PHP_BINARY.' artisan storage:link',
         ]);
 
         $this->runCommands($commands, $input, $output);
 
         $this->commitChanges('Install Jetstream', $directory, $input, $output);
+    }
+
+
+    protected function installAuth(string $directory, InputInterface $input, OutputInterface $output)
+    {
+        chdir($directory);
+
+        $commands = array_filter([
+            $this->findComposer().' require laravel/ui',
+            trim(sprintf(PHP_BINARY.' artisan ui vue --auth %s %s',  '')),
+            //'npm install && npm run dev',
+            PHP_BINARY.' artisan storage:link',
+        ]);
+
+        $this->runCommands($commands, $input, $output);
+
+        $this->commitChanges('Install Laravel Auth', $directory, $input, $output);
     }
 
     /**
