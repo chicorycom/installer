@@ -215,7 +215,7 @@ class Command extends symfonyCommand
 
         $commands = array_filter([
             $this->findComposer().' require laravel/ui',
-            trim(sprintf(PHP_BINARY.' artisan ui vue --auth %s %s',  '')),
+            PHP_BINARY.' artisan ui vue --auth',
             //'npm install && npm run dev',
             PHP_BINARY.' artisan storage:link',
         ]);
