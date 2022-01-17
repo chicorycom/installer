@@ -118,7 +118,7 @@ class Command extends symfonyCommand
             }
         }else {
             if (PHP_OS_FAMILY != 'Windows') {
-                $commands[] = "chmod 755 \"$directory/console\"";
+                $commands[] = "chmod 755 \"$directory/chicorycom\"";
             }
         }
 
